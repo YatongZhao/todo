@@ -4,10 +4,27 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
+import { Data } from './Data';
+import { StoreProvider } from './store/store';
+import { autorun } from 'mobx';
+
+const _data = window.localStorage.getItem('data');
+let source = [];
+if (_data) {
+  source = JSON.parse(_data);
+}
+const data = new Data(source);
+autorun(() => {
+  window.localStorage.setItem('data', JSON.stringify(data.actionSources));
+});
+
+
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  // <React.StrictMode>
+    <StoreProvider value={data}>
+      <App />
+    </StoreProvider>,
+  // </React.StrictMode>,
   document.getElementById('root')
 );
 
