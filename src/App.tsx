@@ -8,6 +8,7 @@ import {
 } from '@material-ui/core';
 import { AddProject } from './components/AddProject';
 import { Today } from './components/Today';
+import { Home } from './components/Home';
 
 const App = () => {
   const store = useContext(StoreContext);
@@ -39,6 +40,7 @@ const App = () => {
   return useObserver(() => (
   <Box>
     <AddProject />
+    <Home />
     {dataByTimeRanges.length > 0 && (
     <Today data={dataByTimeRanges[0]} />
     )}

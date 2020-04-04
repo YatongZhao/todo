@@ -1,8 +1,21 @@
-import React, { useState, Dispatch, SetStateAction } from 'react';
-import { DataByTimeRange, Action } from '../Data';
-import { Box, Card, CardHeader, ButtonBase, makeStyles, CardActions, IconButton, Avatar, CardContent, Typography, Collapse } from '@material-ui/core';
+import React, { useState, Dispatch, SetStateAction, useContext } from 'react';
+import SwipeableViews from 'react-swipeable-views';
+import { DataByTimeRange, Action, status, projectId, ProjectMapItem } from '../Data';
+import {
+    Box,
+    Card,
+    CardHeader,
+    ButtonBase,
+    makeStyles,
+    CardContent,
+    Typography,
+    Collapse,
+    Tabs, Tab, ButtonGroup, Button, ThemeProvider, createMuiTheme } from '@material-ui/core';
 import { useObserver } from 'mobx-react-lite';
 import { blue, yellow, amber, orange, green, grey } from '@material-ui/core/colors';
+import { StoreContext } from '../store/store';
+import { theme } from './Home';
+import moment from 'moment';
 
 const useStyles = makeStyles({
     root: {
@@ -21,68 +34,123 @@ const useStyles = makeStyles({
     },
     span: {
         fontSize: 12,
+    },
+    tabs: {
+        '& .MuiTabs-indicator': {
+            backgroundColor: 'white',
+            height: 3,
+            borderTopLeftRadius: 3,
+            borderTopRightRadius: 3,
+        },
     }
 });
 
+interface TabPanelProps {
+    children?: React.ReactNode;
+    dir?: string;
+    index: any;
+    value: any;
+}
+  
+const TabPanel = (props: TabPanelProps) => {
+    const { children, value, index, ...other } = props;
+  
+    return (
+      <Typography
+        component="div"
+        role="tabpanel"
+        hidden={value !== index}
+        {...other}
+      >
+        {value === index && children}
+      </Typography>
+    );
+  }
+
 export const ProjectItem = ({ data, expanded, setExpanded }: {
-    data: Action;
+    data: ProjectMapItem;
     expanded: boolean;
     setExpanded: Dispatch<SetStateAction<number>>
 }) => {
+    const store = useContext(StoreContext);
     const classes = useStyles();
+    const [avalibelTabIndex, setAvalibelTabIndex] = useState(0);
+    const headAction = data.head.data;
+    const endAction = data.end.data;
     let bgcolor;
-    switch (data.status) {
+    switch (headAction.status) {
         case 'pending':
-            bgcolor = blue[200];
+            bgcolor = blue;
             break;
         case 'partial':
-            bgcolor = yellow[200];
+            bgcolor = yellow;
             break;
         case 'resolved':
         default:
-            bgcolor = green[200];
+            bgcolor = green;
             break;
     }
+    const handleStatus = (projectId: projectId, status: status) => {
+        store.updateProject(projectId, { status });
+        setExpanded(-1);
+    }
     return (
-        <Box m={1} key={data.projectId}>
-            <ButtonBase className={classes.root}>
+        <Box m={1} key={headAction.projectId}>
                 <Card>
-                    <Box bgcolor={bgcolor} onClick={() => {
-                        setExpanded(expanded ? -1 : data.projectId);
-                    }}>
-                        <CardHeader
-                            title={data.title}
-                        />
-                    </Box>
-                <Collapse in={expanded} timeout="auto" unmountOnExit>
-                    <CardContent>
-                    <Typography paragraph>Method:</Typography>
-                    <Typography paragraph>
-                        Heat 1/2 cup of the broth in a pot until simmering, add saffron and set aside for 10
-                        minutes.
-                    </Typography>
-                    <Typography paragraph>
-                        Heat oil in a (14- to 16-inch) paella pan or a large, deep skillet over medium-high
-                        heat. Add chicken, shrimp and chorizo, and cook, stirring occasionally until lightly
-                        browned, 6 to 8 minutes. Transfer shrimp to a large plate and set aside, leaving chicken
-                        and chorizo in the pan. Add pimentón, bay leaves, garlic, tomatoes, onion, salt and
-                        pepper, and cook, stirring often until thickened and fragrant, about 10 minutes. Add
-                        saffron broth and remaining 4 1/2 cups chicken broth; bring to a boil.
-                    </Typography>
-                    <Typography paragraph>
-                        Add rice and stir very gently to distribute. Top with artichokes and peppers, and cook
-                        without stirring, until most of the liquid is absorbed, 15 to 18 minutes. Reduce heat to
-                        medium-low, add reserved shrimp and mussels, tucking them down into the rice, and cook
-                        again without stirring, until mussels have opened and rice is just tender, 5 to 7
-                        minutes more. (Discard any mussels that don’t open.)
-                    </Typography>
-                    <Typography>
-                        Set aside off of the heat to let rest for 10 minutes, and then serve.
-                    </Typography>
-                    </CardContent>
-                </Collapse>
-                </Card>
+            <ButtonBase className={classes.root}>
+                <Box bgcolor={bgcolor[200]} onClick={() => {
+                    setExpanded(expanded ? -1 : headAction.projectId);
+                    setAvalibelTabIndex(0);
+                }}>
+                    <CardHeader
+                        title={headAction.title}
+                    />
+                </Box>
             </ButtonBase>
+            <Collapse in={expanded} timeout="auto" unmountOnExit>
+                <Box bgcolor={bgcolor[50]}>
+                    <Tabs value={avalibelTabIndex} onChange={(event, index) => setAvalibelTabIndex(index)} className={classes.tabs}>
+                        <Tab label="detail" />
+                        <Tab label="history" />
+                        <Box position="absolute" right={0} padding={1}>
+                            <ThemeProvider theme={theme}>
+                                <ButtonGroup size="small">
+                                    {headAction.status !== 'resolved'
+                                        && <Button onClick={() => handleStatus(headAction.projectId, 'resolved')}>Done</Button>}
+                                    {headAction.status !== 'pending'
+                                        && <Button onClick={() => handleStatus(headAction.projectId, 'pending')}>Undo</Button>}
+                                    {headAction.status !== 'partial'
+                                        && <Button onClick={() => handleStatus(headAction.projectId, 'partial')}>Partial done</Button>}
+                                </ButtonGroup>
+                            </ThemeProvider>
+                        </Box>
+                    </Tabs>
+                </Box>
+                    <SwipeableViews
+                        index={avalibelTabIndex}
+                        onChangeIndex={(index: number) => setAvalibelTabIndex(index)}
+                        >
+                <CardContent>
+                    <TabPanel value={avalibelTabIndex} index={0} dir={theme.direction}>
+                        <Box>
+                            create time: {moment(endAction.modifyTime).format('YYYY-MM-DD HH:mm:ss')}
+                        </Box>
+                        <Box>
+                            last modify time: {moment(headAction.modifyTime).format('YYYY-MM-DD HH:mm:ss')}
+                        </Box>
+                        <Box>
+                            description: {headAction.description || 'no description.'}
+                        </Box>
+                    </TabPanel>
+                </CardContent>
+                <CardContent>
+                    <TabPanel value={avalibelTabIndex} index={1} dir={theme.direction}>
+                    History
+                    </TabPanel>
+                </CardContent>
+                    </SwipeableViews>
+            </Collapse>
+                </Card>
         </Box>
     );
 }
@@ -96,19 +164,19 @@ export const Today = ({ data }: {
     <Box>
         <Box>
             {data.resolvedData.map(item => (
-                <ProjectItem key={item.head.data.projectId} data={item.head.data}
+                <ProjectItem key={item.head.data.projectId} data={item}
                     expanded={expendedProjectId === item.head.data.projectId} setExpanded={setExpandedProjectId} />
             ))}
         </Box>
         <Box>
             {data.partialData.map(item => (
-                <ProjectItem key={item.head.data.projectId} data={item.head.data}
+                <ProjectItem key={item.head.data.projectId} data={item}
                     expanded={expendedProjectId === item.head.data.projectId} setExpanded={setExpandedProjectId} />
             ))}
         </Box>
         <Box>
             {data.pendingData.map(item => (
-                <ProjectItem key={item.head.data.projectId} data={item.head.data}
+                <ProjectItem key={item.head.data.projectId} data={item}
                     expanded={expendedProjectId === item.head.data.projectId} setExpanded={setExpandedProjectId} />
             ))}
         </Box>
