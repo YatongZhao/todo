@@ -9,10 +9,11 @@ import {
 import { AddProject } from './components/AddProject';
 import { Today } from './components/Today';
 import { Home } from './components/Home';
+import './App.css';
 
 const App = () => {
   const store = useContext(StoreContext);
-  const [days, setDays] = useState([Date.now()]);
+  const [days, setDays] = useState([Date.now(), Date.now() - 1000 * 60 * 60 * 24]);
   const [dataByTimeRanges, setDataByTimeRanges] = useState([] as DataByTimeRange[]);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ const App = () => {
       moment(day).endOf('day').valueOf()
     )));
   }, [days, store]);
+  console.log(dataByTimeRanges);
 
   function addBackDay() {
     setDays([

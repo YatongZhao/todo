@@ -23,14 +23,17 @@ const useStyles = makeStyles({
         width: '100%',
         textAlign: 'left',
     },
+    card: {
+        border: 'none',
+    },
     avatar: {
       backgroundColor: blue[100],
     },
     title: {
-        fontSize: 20,
-        textOverflow: 'ellipsis',
-        height: 30,
-        overflow: 'hidden',
+        '& .MuiCardHeader-title': {
+            fontSize: 18,
+            letterSpacing: 1,
+        },
     },
     span: {
         fontSize: 12,
@@ -96,15 +99,13 @@ export const ProjectItem = ({ data, expanded, setExpanded }: {
     }
     return (
         <Box m={1} key={headAction.projectId}>
-                <Card>
+                <Card variant="outlined" className={classes.card}>
             <ButtonBase className={classes.root}>
-                <Box bgcolor={bgcolor[200]} onClick={() => {
+                <Box bgcolor={bgcolor[100]} color={grey[700]} onClick={() => {
                     setExpanded(expanded ? -1 : headAction.projectId);
                     setAvalibelTabIndex(0);
                 }}>
-                    <CardHeader
-                        title={headAction.title}
-                    />
+                    <CardHeader className={classes.title} title={headAction.title} />
                 </Box>
             </ButtonBase>
             <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -120,7 +121,7 @@ export const ProjectItem = ({ data, expanded, setExpanded }: {
                                     {headAction.status !== 'pending'
                                         && <Button onClick={() => handleStatus(headAction.projectId, 'pending')}>Undo</Button>}
                                     {headAction.status !== 'partial'
-                                        && <Button onClick={() => handleStatus(headAction.projectId, 'partial')}>Partial done</Button>}
+                                        && <Button onClick={() => handleStatus(headAction.projectId, 'partial')}>Partial</Button>}
                                 </ButtonGroup>
                             </ThemeProvider>
                         </Box>
